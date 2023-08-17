@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Face Confirmation</title>
+</head>
+<body>
+<div class="flash-messages">
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.type }}">{{ message.message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+</div>
+    <div id="myModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-content-container">
+                <div class="instructions">
+                    <h2>Face Confirmation</h2>
+                    <p>Follow the instructions below to confirm your face:</p>
+                    <ol>
+                        <li>Ensure good lighting.</li>
+                        <li>Look directly at the camera.</li>
+                        <li>Keep your face centered.</li>
+                    </ol>
+                </div>
+                <div class="image-box">
+                    <video id="video-feed"></video>
+                    <button id="capture-button">Capture</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="bodily">
+        <div>
+            <img src="{{ url_for('static', filename='images/img2.png') }}">
+        </div>
+        <div class="face-confirmation-container">
+            <h2>Face Confirmation</h2>
+            <form method="POST" enctype="multipart/form-data" id="face-confirmation-form">
+                <input type="hidden" name="captured_image" id="captured-image-input">
+                <button type="button" id="open-modal-button">Capture Face</button>
+                <button type="submit">Confirm Face</button>
+            </form>
+            <div id="image-preview" style="display: none;">
+                <h2>Preview Captured Image</h2>
+                <img id="captured-image" src="#" alt="Captured Image">
+            </div>
+        </div>
+    </div>
+    <script>
+        // Access the camera feed and display it in the video element
+        const videoElement = document.getElementById('video-feed');
+        const captureButton = document.getElementById('capture-button');
+        const openModalButton = document.getElementById('open-modal-button');
+        const capturedImageInput = document.getElementById('captured-image-input');
+        let stream = null;
+
+        openModalButton.addEventListener('click', async () => {
+            stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoElement.srcObject = stream;
+            videoElement.play();
+
+            // Open the modal when camera feed is ready
+            const modal = document.getElementById('myModal');
+            modal.style.display = 'block';
+        });
+
+        captureButton.addEventListener('click', () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+            canvas.getContext('2d').drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+            const capturedImage = canvas.toDataURL('image/jpeg');
+            capturedImageInput.value = capturedImage;
+
+            // Display the captured image in the preview
+            const capturedImageElement = document.getElementById('captured-image');
+            capturedImageElement.src = capturedImage;
+            document.getElementById('image-preview').style.display = 'block';
+
+            // Close the modal and stop the camera feed
+            const modal = document.getElementById('myModal');
+            modal.style.display = 'none';
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+        });
+
+        // Close the modal when the close button is clicked
+        const closeModalButton = document.querySelector('.close');
+        closeModalButton.addEventListener('click', () => {
+            if (stream) {
+                stream.getTracks().forEach(track => track.stop());
+            }
+            const modal = document.getElementById('myModal');
+            modal.style.display = 'none';
+        });
+    </script>
+</body>
+</html>

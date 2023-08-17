@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Face Gesture and Recognition Authentication</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body{
+
+  background: #aa4b6b; /* fallback for old browsers */
+  background: -webkit-linear-gradient(to right, #aa4b6b, #6b6b83, #3b8d99); /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(to right, #aa4b6b, #6b6b83, #3b8d99); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+  color: #ffffff;
+    }
+  </style>
+</head>
+<body>
+<div class="flash-messages">
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.type }}">{{ message.message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+</div>
+<div class="container">
+  <header class="header">
+    <h1>Face Gesture and Face Recognition Authentication</h1>
+    <p>This website uses face gesture and face recognition authentication to allow users to log in and access protected content.</p>
+  </header>
+
+
+  <section class="features">
+    <div  class="contain">
+      <h2 class="text-center">Features</h2>
+    <ul class="list-unstyled">
+      <li>Securely logs in users using their face gestures and face recognition.</li>
+      <li>Allows users to access protected content with a simple gesture.</li>
+    </ul>
+      </div>
+    <div class="contain">
+      <img src="{{ url_for('static', filename='images/img1.png') }}">
+    </div>
+  </section>
+
+  <section class="cta">
+    <h2 class="text-center">Get Started</h2>
+    <div class="btn-group">
+      <a class="btn btn-primary" href="login">Login</a>
+      <a class="btn btn-secondary" href="register">Register</a>
+    </div>
+  </section>
+</div>
+</body>
+</html>
+

@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Face Confirmation</title>
+    <script src="//code.jquery.com/jquery-3.3.1.min.js"></script>
+
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+        <!-- Require the peer dependencies of facemesh. -->
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@2.6.0/dist/tf-core.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-converter@2.6.0/dist/tf-converter.min.js"></script>
+
+        <!-- You must explicitly require a TF.js backend if you're not using the tfs union bundle. -->
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@2.6.0/dist/tf-backend-wasm.min.js"></script>
+
+        <!-- Pretrained facemesh model. -->
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/face-landmarks-detection@0.0.2/dist/face-landmarks-detection.min.js"></script>
+
+        <!-- https://medium.com/swlh/how-to-access-webcam-and-take-picture-with-javascript-b9116a983d78 -->
+        <script type="text/javascript" src="https://unpkg.com/webcam-easy/dist/webcam-easy.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+
+        #webcam-control {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #webcam-switch {
+            display: none;
+        }
+
+        #webcam-caption {
+            cursor: pointer;
+            padding: 8px 16px;
+            font-size: 18px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+        }
+
+        #video-container {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        #webcam {
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+        }
+
+        #start-capture, #capture-running {
+            display: inline-block;
+            margin: 10px;
+            padding: 8px 16px;
+            font-size: 24px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        #info-text {
+            display: none;
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+<div class="flash-messages">
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.type }}">{{ message.message }}</div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+</div>
+    <div id="webcam-control">
+        <label for="webcam-switch">
+            <span id="webcam-caption">Click to Start Camera</span>
+        </label>
+        <input type="checkbox" id="webcam-switch">
+    </div>
+
+    <div id="video-container">
+        <video id="webcam" autoplay playsinline width="640" height="480"></video>
+        <div>
+            <button id="start-capture"><i class="fa fa-camera"></i></button>
+            <span id="blink-times" style="font-size: 18px; margin-left: 10px;">Number of Blinks Needed: 0</span>
+            <span id="blink-count" style="font-size: 18px; margin-left: 10px;">Blinks: 0</span>
+            <span id="info-text" style="display: none; font-size: 18px;">Please Wait</span>
+        </div>
+        <canvas id="canvas" class="d-none"></canvas>
+    </div>
+    </div>
+
+<script>
+            function generateRandomNumber() {
+              // The minimum and maximum values of the random number
+              const min = 3;
+              const max = 5;
+
+              // Generate a random number between min and max, inclusive
+              const randomNumber = Math.floor(Math.random() * (max - min + 1)) + min;
+
+              // Return the random number
+              return randomNumber;
+            }
+            const webcamElement = document.getElementById('webcam');
+            const canvasElement = document.getElementById('canvas');
+            const webcam = new Webcam(webcamElement, 'user', canvasElement);
+
+            let model = null;
+            let cameraFrame = null;
+            let running = true;
+            let timeout = null;
+            let blinkCount = 0;
+            let countTimes = generateRandomNumber();
+
+                function startCaptura() {
+        blinkCount = 0; // Reset blink count
+        isCapturing = true;
+        $('#start-capture').hide();
+        $('#info-text').text('Detecting blinks...');
+        $('#info-text').show();
+
+        // Load the MediaPipe Facemesh package and start capturing.
+        faceLandmarksDetection.load(
+            faceLandmarksDetection.SupportedPackages.mediapipeFacemesh,
+            { maxFaces: 1 }
+        ).then(mdl => {
+            model = mdl;
+            cameraFrame = detectKeyPoints();
+        }).catch(err => {
+            console.log(err);
+            stopCaptura();
+        });
+    }
+
+    function stopCaptura() {
+        isCapturing = false;
+        $('#capture-running').hide();
+        $('#start-capture').show();
+        $('#info-text').hide();
+
+        if (cameraFrame != null) {
+            cancelAnimationFrame(cameraFrame);
+        }
+    }
+
+    // Attach event handlers
+    $('#start-capture').click(startCaptura);
+
+    $('#webcam-switch').change(function () {
+        if (this.checked) {
+            webcam.start()
+                .then(result => {
+                    $('#webcam-caption').text('Click to Stop Camera');
+                    $('#video-container').show();
+                    console.log('webcam started');
+                })
+                .catch(err => {
+                    console.log(err);
+                });
+        } else {
+            stopCaptura();
+            webcam.stop();
+            $('#webcam-caption').text('Click to Start Camera');
+            $('#video-container').hide();
+            console.log('webcam stopped');
+        }
+    });
+
+            async function main() {
+
+                await setupFaceLandmarkDetection()
+            }
+
+            async function setupFaceLandmarkDetection() {
+
+                // Setup TF Backend type
+                await tf.setBackend('wasm');
+
+            }
+
+            async function detectaPiscada(keypoints) {
+                return true;
+            }
+
+            async function detectKeyPoints() {
+            if (isCapturing) {
+                const predictions = await model.estimateFaces({
+                    input: webcamElement,
+                    returnTensors: false,
+                    flipHorizontal: true,
+                    predictIrises: true
+                });
+                const canvas = document.getElementById('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                if (predictions.length > 0) {
+                    const keypoints = predictions[0].scaledMesh;
+
+                    if (detectarPiscada(keypoints)) {
+                        blinkCount++;
+                        document.getElementById('blink-times').textContent = 'Number of Blinks Needed: ' + countTimes;
+                        document.getElementById('blink-count').textContent = 'Blinks: ' + blinkCount;
+                        if (blinkCount >= countTimes) {
+                            stopCaptura(); // Stop capturing after 3 blinks
+                            window.location.href = '/dashboard';
+                        }
+                    }
+                     // Draw face bounding box
+                        const boundingBox = predictions[0].boundingBox;
+                        ctx.strokeStyle = 'red';
+                        ctx.lineWidth = 2;
+                        ctx.strokeRect(boundingBox.topLeft[0], boundingBox.topLeft[1], boundingBox.bottomRight[0] - boundingBox.topLeft[0], boundingBox.bottomRight[1] - boundingBox.topLeft[1]);
+                }
+
+                cameraFrame = requestAnimationFrame(detectKeyPoints);
+            }
+            }
+
+            function detectarPiscada(keypoints) {
+
+                leftEye_l = 263
+                    leftEye_r = 362
+                    leftEye_t = 386
+                    leftEye_b = 374
+
+                    rightEye_l = 133
+                    rightEye_r = 33
+                    rightEye_t = 159
+                    rightEye_b = 145
+
+                    aL = euclidean_dist(keypoints[leftEye_t][0], keypoints[leftEye_t][1], keypoints[leftEye_b][0], keypoints[leftEye_b][1]);
+                    bL = euclidean_dist(keypoints[leftEye_l][0], keypoints[leftEye_l][1], keypoints[leftEye_r][0], keypoints[leftEye_r][1]);
+                    earLeft = aL / (2 * bL);
+
+                    aR = euclidean_dist(keypoints[rightEye_t][0], keypoints[rightEye_t][1], keypoints[rightEye_b][0], keypoints[rightEye_b][1]);
+                    bR = euclidean_dist(keypoints[rightEye_l][0], keypoints[rightEye_l][1], keypoints[rightEye_r][0], keypoints[rightEye_r][1]);
+                    earRight = aR / (2 * bR);
+
+                    console.log('-----> ' + earLeft + '\t' + earRight);
+
+                    if ((earLeft < 0.1) || (earRight < 0.1)) {
+                        return true;
+                    } else {
+                        return false;
+                    }
+
+            }
+
+            function euclidean_dist (x1, y1, x2, y2) {
+                return Math.sqrt( Math.pow((x1-x2), 2) + Math.pow((y1-y2), 2) );
+            };
+
+            main();
+</script>
+
+</body>
+</html>
