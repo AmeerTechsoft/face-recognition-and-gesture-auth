@@ -1,5 +1,7 @@
 # Face Recognition and Gesture Detection Web Application
 
+![Landing Page](landingpage.jpg)
+
 This is a web application that implements face recognition for user authentication and gesture detection using Flask, dlib, and Mediapipe.
 
 ## Features

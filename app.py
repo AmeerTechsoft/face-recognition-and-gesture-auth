@@ -11,7 +11,7 @@ import numpy as np
 from database import db
 from models import User
 import dlib
-app = Flask(__name__, static_url_path='static')
+app = Flask(__name__, static_url_path='/static')
 app.secret_key = 'your_secret_key'
 
 # Configure the database
